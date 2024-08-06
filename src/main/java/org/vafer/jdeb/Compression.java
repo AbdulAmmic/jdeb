@@ -17,7 +17,6 @@
 package org.vafer.jdeb;
 
 import java.io.OutputStream;
-
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 
@@ -31,30 +30,31 @@ public enum Compression {
     BZIP2(".bz2"),
     XZ(".xz");
 
-    private String extension;
+    private final String extension;
 
     Compression(String extension) {
         this.extension = extension;
     }
 
     /**
-     * Returns the extension of the compression method
+     * Returns the extension of the compression method.
      */
     public String getExtension() {
         return extension;
     }
 
+    /**
+     * Wraps the provided output stream with a compressor output stream based on the compression method.
+     *
+     * @param out the output stream to wrap
+     * @return the wrapped output stream
+     * @throws CompressorException if an error occurs during stream creation
+     */
     public OutputStream toCompressedOutputStream(OutputStream out) throws CompressorException {
-        switch (this) {
-            case GZIP:
-                return new CompressorStreamFactory().createCompressorOutputStream("gz", out);
-            case BZIP2:
-                return new CompressorStreamFactory().createCompressorOutputStream("bzip2", out);
-            case XZ:
-                return new CompressorStreamFactory().createCompressorOutputStream("xz", out);
-            default:
-                return out;
+        if (this == NONE) {
+            return out;
         }
+        return new CompressorStreamFactory().createCompressorOutputStream(name().toLowerCase(), out);
     }
 
     /**
@@ -65,15 +65,12 @@ public enum Compression {
      * @return the compression method, or null if not recognized
      */
     public static Compression toEnum(String name) {
-        if ("gzip".equalsIgnoreCase(name) || "gz".equalsIgnoreCase(name)) {
-            return GZIP;
-        } else if ("bzip2".equalsIgnoreCase(name) || "bz2".equalsIgnoreCase(name)) {
-            return BZIP2;
-        } else if ("xz".equalsIgnoreCase(name)) {
-            return XZ;
-        } else if ("none".equalsIgnoreCase(name)) {
-            return NONE;
-        } else {
+        if (name == null) {
+            return null;
+        }
+        try {
+            return Compression.valueOf(name.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
             return null;
         }
     }
